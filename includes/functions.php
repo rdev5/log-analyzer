@@ -168,7 +168,6 @@ class FileStream {
       while( ($this->buffer = gzgets($this->fp)) !== false ) {
 
         if($this->line_no == $line_no) {
-          echo $this->buffer;
 
           $this->end_time['stream_file_get_line'] = microtime(true);
           $this->benchmark_time['stream_file_get_line'] = $this->end_time['stream_file_get_line'] - $this->start_time['stream_file_get_line'];
