@@ -12,13 +12,14 @@ class FileStream {
   public $is_compressed;
   public $line_no;
   public $buffer;
+  public $benchmark_time;
   public $lines = 0;
   public $fp = FALSE;
   public $error = FALSE;
 
-
   private $file_opened = FALSE;
-
+  private $start_time;
+  private $end_time;
 
   public function __construct($filename, $autoload = TRUE) {
 
@@ -81,7 +82,9 @@ class FileStream {
 
   }
 
-  public function stream_file_line($l) {
+  public function stream_file_get_line($l) {
+
+    $this->start_time = microtime(TRUE);
 
     if(!$this->file_opened) {
       $this->open_file($this->filename);
@@ -103,8 +106,14 @@ class FileStream {
 
       while( ($this->buffer = gzgets($this->fp)) !== FALSE ) {
 
-        if($this->line_no == $l)
+        if($this->line_no == $l) {
+
+          $this->end_time = microtime(TRUE);
+          $this->benchmark_time = $this->end_time - $this->start_time;
+
           return gztell($this->fp);
+
+        }
 
         $this->line_no++;
       }
@@ -116,14 +125,22 @@ class FileStream {
 
       while( ($this->buffer = fgets($this->fp)) !== FALSE ) {
 
-        if($this->line_no == $l)
+        if($this->line_no == $l) {
+
+          $this->end_time = microtime(TRUE);
+          $this->benchmark_time = $this->end_time - $this->start_time;
+
           return ftell($this->fp);
+
+        }
 
         $this->line_no++;
       }
 
     }
 
+    $this->end_time = microtime(TRUE);
+    $this->benchmark_time = $this->end_time - $this->start_time;
     return FALSE;
 
   }
