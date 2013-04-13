@@ -6,13 +6,17 @@ TODO
 -----
 Install libevent library for use by polling utilities (epoll) to stream data or implement prggmr/XPSPL.
 
-Recent Tests
+Recent Tests (2,084,665 lines, 565M uncompressed log file)
 -----
-4/12/13 - 3.34s to get to line 2,084,665 of an uncompressed 565M Apache access log file  
-4/13/13 - 1.6s to get to line 2,084,665 (pointer at position 592,350,082) of an uncompressed 565M Apache access.log text file
+4/12/13  
+3.34s to jump to end of file
+  
+4/13/13  
+1.56s to jump to end of file  
+2.58s to return 84 results for an IP address
 
 Credits
 -----
-teotwaki - Optimization tips  
+teotwaki - Optimization tips, event-driven implementation model  
 GoogleGuy - Aggregation tips  
 TheHackOps - Reference to prggmr/XPSPL
