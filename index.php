@@ -12,21 +12,17 @@ function handle_line($l, $line) {
 
 $start_time = microtime(true);
 
-$is_compressed = gz_file($target_file);
-$fp = open_file($target_file, $is_compressed);
-
 echo '<h1>Log Analyzer</h1>';
 
-echo '<h2>stream_file()</h2>';
-stream_file($fp, $is_compressed);
+$f = new FileStream($target_file, true);
 
 echo '<h2>stream_file_line()</h2>';
-for($i = 1; $i <= 600; $i++) {
-  $p = stream_file_line($i, $fp, $is_compressed);
+for($i = 2084665; $i <= 2084665; $i++) {
+  $p = $f->stream_file_line($i);
+  if($p) echo "Line {$i}: {$f->buffer}<br />";
 }
 
-echo '<hr />';
-echo 'Time: ' . microtime_benchmark($start_time) . 'ms<br />';
-echo "Pointer location: {$p}";
 
-fclose($fp);
+echo '<hr />';
+echo 'Time: ' . (microtime(true) - $start_time) . 's<br />';
+echo "Pointer location: {$p}";
