@@ -6,30 +6,33 @@
  * Handling compressed files (*.gz) is 50% slower than handling uncompressed files
  */
 
+function benchmark_start() {
+
+  return microtime(true);
+
+}
+
+function benchmark($start_time) {
+
+  return number_format(microtime(true) - $start_time, 4, '.', ',');
+
+}
+
 class FileStream {
+
+  public static $SEARCH_LIMIT = 280000;  // 280,182
 
   public $filename;
   public $is_compressed;
   public $line_no;
+  public $line_count = 0;
   public $buffer;
-  public $benchmark_time = array(
-    'stream_file_get_line' => 0,
-    'stream_file_search' => 0,
-  );
   public $search_results = array();
   public $fp = false;
   public $error = false;
 
   private $file_opened = false;
-  private $start_time = array(
-    'stream_file_get_line' => 0,
-    'stream_file_search' => 0,
-  );
-  private $end_time = array(
-    'stream_file_get_line' => 0,
-    'stream_file_search' => 0,
-  );
-
+  
   public function __construct($filename, $autoload = true) {
 
     gc_enable();
@@ -66,6 +69,11 @@ class FileStream {
 
   public function open_file($filename) {
 
+    if(!$filename) {
+      $this->error = 'No file specified.';
+      return false;
+    }
+
     if(!file_exists($filename)) {
       $this->error = "File not found: {$filename}";
       return false;
@@ -95,17 +103,21 @@ class FileStream {
 
   }
 
-  public function stream_file_search($keyword) {
+  private function _file_ready() {
 
     if(!$this->file_opened) {
       $this->open_file($this->filename);
     }
 
-    if($this->error) {
-      return false;
-    }
+    return $this->error === false;
 
-    $this->start_time['stream_file_search'] = microtime(true);
+  }
+
+  public function stream_file_line_count() {
+
+    if(!$this->file_opened || $this->error)
+      return false;
+
 
     if($this->is_compressed) {
 
@@ -114,8 +126,54 @@ class FileStream {
 
       while( ($buffer = gzgets($this->fp)) !== false ) {
 
-        if(strpos($buffer, $keyword) !== false) {
+        $this->line_count++;
+
+      }
+
+    } else {
+
+      if(ftell($this->fp) != 0)
+        rewind($this->fp);
+
+      while( ($buffer = fgets($this->fp)) !== false ) {
+
+        $this->line_count++;
+
+      }
+
+    }
+      
+    gc_collect_cycles();
+
+    return $this->line_count;
+
+  }
+
+  public function stream_file_search($search_term) {
+
+    if(!$search_term || !$this->file_opened || $this->error)
+      return false;
+
+
+    $results_found = 0;
+
+    if($this->is_compressed) {
+
+      if(gztell($this->fp) != 0)
+        gzrewind($this->fp);
+
+      while( ($buffer = gzgets($this->fp)) !== false ) {
+
+        if(strpos($buffer, $search_term) !== false) {
+
           $this->search_results[] = $buffer;
+          $results_found++;
+
+        }
+
+        if($results_found >= $this::$SEARCH_LIMIT) {
+          $this->error = "Search limit reached. Try narrowing your search terms.";
+          break;
         }
 
       }
@@ -127,17 +185,22 @@ class FileStream {
 
       while( ($buffer = fgets($this->fp)) !== false ) {
 
-        if(strpos($buffer, $keyword) !== false) {
+        if(strpos($buffer, $search_term) !== false) {
+
           $this->search_results[] = $buffer;
+          $results_found++;
+
+        }
+
+        if($results_found >= $this::$SEARCH_LIMIT) {
+          $this->error = "Search limit reached. Try narrowing your search terms.";
+          break;
         }
 
       }
 
     }
 
-    $this->end_time['stream_file_search'] = microtime(true);
-    $this->benchmark_time['stream_file_search'] = $this->end_time['stream_file_search'] - $this->start_time['stream_file_search'];
-      
     gc_collect_cycles();
 
     return count($this->search_results);
@@ -146,18 +209,13 @@ class FileStream {
 
   public function stream_file_get_line($line_no) {
 
-    if(!$this->file_opened) {
-      $this->open_file($this->filename);
-    }
-
-    if($this->error) {
+    if(!$line_no || !$this->file_opened || $this->error)
       return false;
-    }
+
 
     $line_no = (int)$line_no;
     if($line_no < 1) return false;
 
-    $this->start_time['stream_file_get_line'] = microtime(true);
     $this->line_no = 1;
 
     if($this->is_compressed) {
@@ -168,9 +226,6 @@ class FileStream {
       while( ($this->buffer = gzgets($this->fp)) !== false ) {
 
         if($this->line_no == $line_no) {
-
-          $this->end_time['stream_file_get_line'] = microtime(true);
-          $this->benchmark_time['stream_file_get_line'] = $this->end_time['stream_file_get_line'] - $this->start_time['stream_file_get_line'];
 
           return gztell($this->fp);
 
@@ -188,9 +243,6 @@ class FileStream {
 
         if($this->line_no == $line_no) {
 
-          $this->end_time['stream_file_get_line'] = microtime(true);
-          $this->benchmark_time['stream_file_get_line'] = $this->end_time['stream_file_get_line'] - $this->start_time['stream_file_get_line'];
-
           return ftell($this->fp);
 
         }
@@ -200,8 +252,8 @@ class FileStream {
 
     }
 
-    $this->end_time['stream_file_get_line'] = microtime(true);
-    $this->benchmark_time['stream_file_get_line'] = $this->end_time['stream_file_get_line'] - $this->start_time['stream_file_get_line'];
+    gc_collect_cycles();
+
     return false;
 
   }
