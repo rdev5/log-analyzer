@@ -31,14 +31,22 @@ $f = new FileStream($target_file);
 
 
 // Benchmarks
-$p_start = benchmark_start();
-$p = $f->stream_file_get_line($line_no);
-$p_benchmark = benchmark($p_start);
+$l_start = benchmark_start();
+$line = $f->stream_file_get_line($line_no);
+$l_benchmark = benchmark($l_start);
 
 $c_start = benchmark_start();
-$count = $f->stream_file_search($search_term);
+$search_results = $f->stream_file_search($search_term);
 $c_benchmark = benchmark($c_start);
 
+$fields = $f->line_to_fields_array($line);
+
+// Aggregation
+if($search_results) {
+  $a_start = benchmark_start();
+  $agg = $f->aggregate_search_results($search_results);
+  $a_benchmark = benchmark($a_start);
+}
 ?>
 
 <style type="text/css">
@@ -88,17 +96,22 @@ $c_benchmark = benchmark($c_start);
 <?php endif; ?>
 
 
-<?php if($p) : ?>
+<?php if($line) : ?>
 
   <h3>stream_file_get_line(<?php echo $line_no; ?>)</h3>
-  <p>Finished in <?php echo $p_benchmark ?> seconds</p>
+  <p><pre><?php print_r($fields); ?></pre></p>
+  <p>Finished in <?php echo $l_benchmark ?> seconds</p>
 
 <?php endif; ?>
 
 
-<?php if($count) : ?>
+<?php if($search_results) : ?>
 
   <h3>stream_file_search("<?php echo $search_term; ?>")</h3>
-  <p><?php echo number_format($count, 0, '', ','); ?> results <?php echo "in {$c_benchmark} seconds" ?></p>
+  <p><pre><?php print_r($agg); ?></pre></p>
+  <p>
+    <?php echo number_format($f->results_found, 0, '', ','); ?> results <?php echo "in {$c_benchmark} seconds" ?><br />
+    Aggregated using preg_match() in <?php echo $a_benchmark; ?> seconds
+  </p>
 
 <?php endif; ?>
