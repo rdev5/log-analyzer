@@ -14,7 +14,8 @@ Recent Tests (2,084,665 lines, 565M uncompressed log file)
 4/13/13  
 1.56s to jump to end of file  
 2.58s to return 84 results for an IP address  
-2.40s to return 2,963 results for a given string
+2.40s to return 2,963 results for a given string  
+2.66s to aggregate user agent details from 7,901 results
 
 Credits
 -----
