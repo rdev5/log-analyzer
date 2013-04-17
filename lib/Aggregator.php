@@ -21,7 +21,6 @@ class Aggregator {
   );
 
   private static $AGG_FIELDS = array(
-    'request',
     'timestamp',
     'user_agent',
   );

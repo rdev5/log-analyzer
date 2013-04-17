@@ -142,9 +142,27 @@ if($data) {
       Aggregated user agents in <?php echo $a_benchmark; ?> seconds
     </p>
 
-    <p>
-      <pre><?php print_r($agg); ?></pre>
-    </p>
+    <table class="results" border="1" width="95%">
+      <?php foreach($agg as $section => $data) : ?>
+        <tr>
+          <th colspan="2"><?php echo $section; ?></th>
+        </tr>
+        <?php foreach($data as $field => $score) : ?>
+        <tr>
+          <td width="50%"><?php echo $field; ?></td>
+          <td>
+            <?php if(is_array($score)) : ?>
+              <?php foreach($score as $k => $v) : ?>
+                <?php echo $k; ?> (<?php echo $v; ?>)<br />
+              <?php endforeach; ?>
+            <?php else : ?>
+            <?php echo $score; ?>
+            <?php endif; ?>
+          </td>
+        </tr>
+      <?php endforeach; ?>
+    <?php endforeach; ?>
+    </table>
 
   <?php endif; ?>
 </div>
